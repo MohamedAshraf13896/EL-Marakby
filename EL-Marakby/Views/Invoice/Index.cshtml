@@ -1,0 +1,192 @@
+﻿@model EL_Marakby.Models.Invoice
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<br />
+<br />
+<form method="post" asp-controller="Invoice" onsubmit="return false">
+    <div asp-validation-summary="All" class="text-danger" />
+<div class="container mt-5 mb-5 d-flex justify-content-center">
+    <div class="card px-1 py-4" style="border-radius:10px">
+        <div class="card-body">
+            <p style="font-weight:bolder; color:blue" class="card-title mb-4 text-center">Item Details</p>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <!-- <label for="name">Name</label> --> <input id="Serial" class="form-control mb-3"  asp-for="Serial"  placeholder="Serial">
+                        <span asp-validation-for="Serial"  class="text-danger justify-content-center align-items-center d-flex"></span>
+
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <!-- <label for="name">Name</label> --> <input  id="Customer" class="form-control mb-3" asp-for="Customer"  placeholder="Customer">
+                        <span asp-validation-for="Customer"  class="text-danger justify-content-center align-items-center d-flex"></span>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <div class="input-group"> <input name="Date" id="date" class="form-control mb-3" type="date" asp-for="Date" placeholder="date"> </div>
+                        <span asp-validation-for="Date"  class="text-danger justify-content-center align-items-center d-flex"></span>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <p style="font-weight:bolder; color:blue" class="card-title text-center">Invoice Details</p>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group mt-4">
+                        <fieldset>
+                            <select name="Item_ID" id="Item_ID" class="form-control">
+                            <option value="0" class="text-center" >-- Select Product --</option>
+
+                                @foreach (var item in @ViewBag.items)
+                                {
+
+                                    <option value="@item.ID">@item.Name</option>
+                                }
+                            </select>
+                        </fieldset>
+                    </div>
+                    <br />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <div class="input-group"> <input  min="1" id="Qnty" class="form-control mt-2" type="number" placeholder="Qnty"> </div>
+                        <span  class="text-danger justify-content-center align-items-center d-flex"></span>
+
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <div class="input-group"> <input min="1" name="Price" id="Price" class="form-control" type="number" placeholder="Price"> </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group mt-4">
+                        <span id="err"  class="text-danger justify-content-center align-items-center d-flex"></span>
+                        <button onclick="Add()" class="btn btn-primary btn-block confirm-button mt-4">Add</button>
+
+                    </div>
+                    <br />
+                </div>
+            </div>
+            <div class=" d-flex flex-column text-center px-5 mt-1"> <small class="agree-text" style="color: black">By Booking this appointment you agree to the</small> <a href="#" class="terms">Terms & Conditions</a> </div> <button onclick="SaveData()" class="btn btn-success btn-block confirm-button mt-4">Save</button>
+        </div>
+    </div>
+</div>
+</form>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th class="text-center" scope="col">Name</th>
+            <th class="text-center" scope="col">Price </th>
+            <th class="text-center" scope="col">Qnty</th>
+            <th class="text-center" scope="col">Total</th>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+</table>
+@section Scripts{
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+    <script>
+        var Serial = document.getElementById("Serial");
+        var Customer = document.getElementById("Customer");
+        var InvDate = document.getElementById("date");
+        var Qnty = document.getElementById("Qnty");
+        var Price = document.getElementById("Price");
+        var Items = document.getElementById("Item_ID")
+        const itemsBody = document.getElementById("itemsBody")
+        const invoice = { Invoice: {}, InvoiceDetails: [] };
+
+        function Add() {
+            if(Qnty.value == "" || Price.value == "" || Items.value == 0) {
+                document.getElementById("err").innerHTML = "You Have To Insert Invoice Data"
+                return
+            }
+                document.getElementById("err").innerHTML = ""
+
+            if (invoice.InvoiceDetails.find(ele => ele.Item_ID == Items.value)) {
+                for (let i = 0; i < invoice.InvoiceDetails.length; i++) {
+                    if (invoice.InvoiceDetails[i].Item_ID == Items.value) {
+                        invoice.InvoiceDetails[i].Qnty += Number(Qnty.value)
+                        invoice.InvoiceDetails[i].Total += Number(Qnty.value) * Number(Price.value)
+                    }
+                }
+            } else {
+                invoice.InvoiceDetails.push({
+                    Qnty: +Qnty.value,
+                    Price: +Price.value,
+                    Invoice_ID: 0,
+                    Item_ID: document.getElementById("Item_ID").value,
+                    Total: +Qnty.value * +Price.value,
+                    Name: Items.options[Items.selectedIndex].text
+                })
+            }
+            display();
+        }
+
+        function display() {
+            itemsBody.innerHTML = ''
+            invoice.InvoiceDetails.forEach(ele => {
+                itemsBody.innerHTML += `
+                                            <tr>
+                                                <td class='text-center'>${ele.Name}</td>
+                                                <td class='text-center'>${ele.Price}</td>
+                                                <td class='text-center'>${ele.Qnty}</td>
+                                                <td class='text-center'>${ele.Total}</td>
+                                            </tr>
+                                            `
+            })
+        }
+        function SaveData() {
+            fillInvoice()
+            console.log(invoice);
+            $.ajax({
+                type: "POST",
+                url: "/Invoice/SaveNew",
+                data: JSON.stringify(invoice),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(response) { },
+                failure: function(response) {
+                },
+                error: function(response) {
+                }
+            });
+
+        }
+
+        function fillInvoice() {
+            invoice.Invoice = {
+                Serial: Serial.value,
+                Customer: Customer.value,
+                Date: InvDate.value,
+                Total: CalcTotal()
+            }
+        }
+        function CalcTotal() {
+            let out = 0;
+            for(i=0 ; i < invoice.InvoiceDetails.length ; i++) {
+                out += invoice.InvoiceDetails[i].Total
+            }
+            return out
+        }
+    </script>
+}
